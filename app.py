@@ -187,10 +187,10 @@ def get_gsheet_client():
 def save_results_to_sheet(category, correct_count, wrong_count):
     try:
         client = get_gsheet_client()
-        # Hedef tablonun adını tam olarak buraya yazıyoruz
-        sheet = client.open("ingilizce_test_sonuclari").sheet1
+        # Hedef tablonun adını yeni isme göre belirledik
+        sheet = client.open("sinif10unite7sonuclari").sheet1
         
-        # Türkiye saati ile zaman damgası oluşturma
+        # Zaman damgası (timestamp) oluşturma
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         row_data = [now, category, correct_count, wrong_count]
         
