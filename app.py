@@ -312,9 +312,6 @@ if answered_questions_count == total_questions:
             with st.spinner('Veriler Google E-Tablolar\'a aktarılıyor...'):
                 success = save_results_to_sheet(student_name, student_number, selected_category, corrects, wrongs)
                 if success:
-                   with st.spinner('Veriler Google E-Tablolar\'a aktarılıyor...'):
-                success = save_results_to_sheet(student_name, student_number, selected_category, corrects, wrongs)
-                if success:
                     st.success("İşlem başarılı. Verileriniz kalıcı olarak kaydedildi.")
                     
                     # Dinamik geri sayım (countdown) mekanizması
