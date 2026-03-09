@@ -312,3 +312,9 @@ if answered_questions_count == total_questions:
                 success = save_results_to_sheet(student_name, student_number, selected_category, corrects, wrongs)
                 if success:
                     st.success("İşlem başarılı. Verileriniz kalıcı olarak kaydedildi.")
+                    
+                    # Oturum verilerini (session state) sıfırlama komutu
+                    st.session_state.user_answers[selected_category] = {}
+                    
+                    # Arayüzü yeni bir kullanıcı için yeniden başlatma (Rerun)
+                    st.rerun()
