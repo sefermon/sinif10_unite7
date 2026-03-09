@@ -184,15 +184,14 @@ def get_gsheet_client():
     client = gspread.authorize(credentials)
     return client
 
-def save_results_to_sheet(category, correct_count, wrong_count):
+def save_results_to_sheet(student_name, student_number, category, correct_count, wrong_count):
     try:
         client = get_gsheet_client()
-        # Hedef tablonun adını yeni isme göre belirledik
         sheet = client.open("sinif10unite7sonuclari").sheet1
         
-        # Zaman damgası (timestamp) oluşturma
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        row_data = [now, category, correct_count, wrong_count]
+        # E-Tablo'daki sütun sıranıza göre verileri listeye ekliyoruz
+        row_data = [now, student_name, student_number, category, correct_count, wrong_count]
         
         sheet.append_row(row_data)
         return True
@@ -286,7 +285,6 @@ answered_questions_count = len(st.session_state.user_answers.get(selected_catego
 if answered_questions_count == total_questions:
     st.info("Tüm soruları yanıtladınız. Performans verilerinizi veritabanına kaydedebilirsiniz.")
     
-    # Doğru/Yanlış hesaplama (Iteration)
     corrects = 0
     wrongs = 0
     for q_idx, ans_idx in st.session_state.user_answers[selected_category].items():
@@ -295,14 +293,22 @@ if answered_questions_count == total_questions:
         else:
             wrongs += 1
             
-    # Metrikleri ekrana yansıtma
     col_res1, col_res2 = st.columns(2)
     col_res1.metric("Doğru Sayısı", corrects)
     col_res2.metric("Yanlış Sayısı", wrongs)
     
-    # Veritabanına Push işlemi
+    # Öğrenci Kimlik Alanı
+    st.divider()
+    st.subheader("Öğrenci Bilgileri")
+    student_name = st.text_input("Adınız ve Soyadınız:")
+    student_number = st.text_input("Okul Numaranız:")
+    
     if st.button("Sonuçları Kaydet ve Testi Bitir"):
-        with st.spinner('Veriler Google E-Tablolar\'a aktarılıyor...'):
-            success = save_results_to_sheet(selected_category, corrects, wrongs)
-            if success:
-                st.success("İşlem başarılı. Verileriniz kalıcı olarak kaydedildi.")
+        # İsim ve numara boş bırakılmışsa kaydetmeyi engelle ve uyarı ver
+        if student_name.strip() == "" or student_number.strip() == "":
+            st.warning("Lütfen kaydetmeden önce adınızı ve numaranızı eksiksiz giriniz.")
+        else:
+            with st.spinner('Veriler Google E-Tablolar\'a aktarılıyor...'):
+                success = save_results_to_sheet(student_name, student_number, selected_category, corrects, wrongs)
+                if success:
+                    st.success("İşlem başarılı. Verileriniz kalıcı olarak kaydedildi.")
