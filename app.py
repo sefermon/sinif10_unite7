@@ -1,5 +1,6 @@
 import streamlit as st
 import gspread
+import time
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 # 1. Sayfa Yapılandırması
@@ -311,10 +312,19 @@ if answered_questions_count == total_questions:
             with st.spinner('Veriler Google E-Tablolar\'a aktarılıyor...'):
                 success = save_results_to_sheet(student_name, student_number, selected_category, corrects, wrongs)
                 if success:
+                   with st.spinner('Veriler Google E-Tablolar\'a aktarılıyor...'):
+                success = save_results_to_sheet(student_name, student_number, selected_category, corrects, wrongs)
+                if success:
                     st.success("İşlem başarılı. Verileriniz kalıcı olarak kaydedildi.")
                     
-                    # Oturum verilerini (session state) sıfırlama komutu
+                    # Dinamik geri sayım (countdown) mekanizması
+                    countdown_placeholder = st.empty()
+                    for i in range(5, 0, -1):
+                        countdown_placeholder.info(f"Yeni oturum başlatılıyor... {i} saniye.")
+                        time.sleep(1) # İşlemciyi 1 saniye beklet (suspend)
+                    
+                    # Geçici bellek (volatile memory) verilerini sıfırlama
                     st.session_state.user_answers[selected_category] = {}
                     
-                    # Arayüzü yeni bir kullanıcı için yeniden başlatma (Rerun)
+                    # Arayüzü yeniden derleme (recompile/rerun)
                     st.rerun()
