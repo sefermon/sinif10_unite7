@@ -1,5 +1,7 @@
 import streamlit as st
-
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
 # 1. Sayfa Yapılandırması
 st.set_page_config(page_title="Dinamik Test Platformu", layout="wide")
 
@@ -168,7 +170,35 @@ if 'user_answers' not in st.session_state:
 # Kategori (Konsept) değiştiğinde soru numarasını sıfırlayan fonksiyon
 def reset_index():
     st.session_state.current_q_index = 0
+# Veritabanı Bağlantı ve Yazma Fonksiyonları
+def get_gsheet_client():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    # .streamlit/secrets.toml içindeki verileri çekip yetkilendirme objesine dönüştürüyoruz
+    credentials = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes
+    )
+    client = gspread.authorize(credentials)
+    return client
 
+def save_results_to_sheet(category, correct_count, wrong_count):
+    try:
+        client = get_gsheet_client()
+        # Hedef tablonun adını tam olarak buraya yazıyoruz
+        sheet = client.open("ingilizce_test_sonuclari").sheet1
+        
+        # Türkiye saati ile zaman damgası oluşturma
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        row_data = [now, category, correct_count, wrong_count]
+        
+        sheet.append_row(row_data)
+        return True
+    except Exception as e:
+        st.error(f"Veritabanı bağlantı hatası (Exception): {e}")
+        return False
 # 4. Arayüz Tasarımı (UI)
 st.sidebar.title("Menü")
 selected_category = st.sidebar.selectbox(
@@ -247,3 +277,32 @@ with nav_col3:
     if st.button("Sonraki Soru ➡", disabled=(current_idx == len(questions) - 1)):
         st.session_state.current_q_index += 1
         st.rerun()
+        # 6. Analitik ve Veritabanı Kayıt Aşaması
+st.divider()
+total_questions = len(questions)
+answered_questions_count = len(st.session_state.user_answers.get(selected_category, {}))
+
+# Sadece tüm sorular cevaplandığında bu blok aktif olur
+if answered_questions_count == total_questions:
+    st.info("Tüm soruları yanıtladınız. Performans verilerinizi veritabanına kaydedebilirsiniz.")
+    
+    # Doğru/Yanlış hesaplama (Iteration)
+    corrects = 0
+    wrongs = 0
+    for q_idx, ans_idx in st.session_state.user_answers[selected_category].items():
+        if ans_idx == questions[q_idx]["correct_index"]:
+            corrects += 1
+        else:
+            wrongs += 1
+            
+    # Metrikleri ekrana yansıtma
+    col_res1, col_res2 = st.columns(2)
+    col_res1.metric("Doğru Sayısı", corrects)
+    col_res2.metric("Yanlış Sayısı", wrongs)
+    
+    # Veritabanına Push işlemi
+    if st.button("Sonuçları Kaydet ve Testi Bitir"):
+        with st.spinner('Veriler Google E-Tablolar\'a aktarılıyor...'):
+            success = save_results_to_sheet(selected_category, corrects, wrongs)
+            if success:
+                st.success("İşlem başarılı. Verileriniz kalıcı olarak kaydedildi.")
