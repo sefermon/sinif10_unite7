@@ -314,14 +314,25 @@ if answered_questions_count == total_questions:
                 if success:
                     st.success("İşlem başarılı. Verileriniz kalıcı olarak kaydedildi.")
                     
-                    # Dinamik geri sayım (countdown) mekanizması
+                   # Dinamik geri sayım (countdown) mekanizması
                     countdown_placeholder = st.empty()
                     for i in range(5, 0, -1):
                         countdown_placeholder.info(f"Yeni oturum başlatılıyor... {i} saniye.")
-                        time.sleep(1) # İşlemciyi 1 saniye beklet (suspend)
+                        time.sleep(1) # İşlemciyi 1 saniye beklet
                     
-                    # Geçici bellek (volatile memory) verilerini sıfırlama
+                    # ANALİTİK ÇÖZÜM: "RESET" OPERASYONU
+                    # 1. Mevcut kategorideki cevapları temizle
                     st.session_state.user_answers[selected_category] = {}
                     
-                    # Arayüzü yeniden derleme (recompile/rerun)
+                    # 2. Soru navigasyon indeksini 1. soruya (0. indeks) döndür
+                    # Not: Kodunuzda bu değişkenin adı farklıysa (örn: q_idx) onu güncelleyin
+                    if 'question_index' in st.session_state:
+                        st.session_state.question_index = 0
+                    
+                    # 3. Alternatif/Garantici Yöntem: Tüm oturum anahtarlarını silerek 
+                    # uygulamayı ilk açılış haline (factory reset) döndürmek isterseniz:
+                    # for key in st.session_state.keys():
+                    #     del st.session_state[key]
+                    
+                    # Arayüzü tam temizlik sonrası yeniden başlat
                     st.rerun()
